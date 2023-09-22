@@ -11,13 +11,11 @@ pipeline {
             }
         }
 
-        stage('Ejecutar Contenedor') {
+        stage('Ejecutar Docker Compose') {
             steps {
                 script {
-                    // Ejecutar un contenedor basado en la imagen Docker construida
-                    customImage.inside('-p 8080:80') {
-                        // Agrega aquí cualquier comando o tarea que desees ejecutar dentro del contenedor
-                    }
+                    // Ejecutar docker-compose up en la misma ruta del Jenkinsfile
+                    sh 'docker-compose up -d'
                 }
             }
         }
