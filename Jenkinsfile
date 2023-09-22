@@ -6,7 +6,7 @@ pipeline {
             steps {
                 script {
                     // Construir la imagen Docker a partir del Dockerfile en el directorio actual
-                    def customImage = docker.build('andherson', '.')
+                    def customImage = docker.build('nginx-alphine:andherson', '.')
                 }
             }
         }
