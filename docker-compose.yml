@@ -1,6 +1,6 @@
 version: '3'
 services:
   nginx:
-    image: nginx-alphine:andherson
+    image: andherson1039/nginx-alpine:${APP_VERSION}
     ports:
       - "80:80"
