@@ -1,6 +1,6 @@
 version: '3'
 services:
   nginx:
-    image: andherson1039/nginx-alpine:215
+    image: andherson1039/nginx-alpine:
     ports:
       - "80:80"
