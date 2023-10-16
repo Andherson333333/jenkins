@@ -1,0 +1,20 @@
+piVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-test-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-test-1
+  template:
+    metadata:
+      labels:
+        app: app-test-1
+    spec:
+      containers:
+      - name: nginx-container
+        image: andherson1039/nginx-alpine:5
+        ports:
+        - name: http
+          containerPort: 80
