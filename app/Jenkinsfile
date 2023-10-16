@@ -21,8 +21,7 @@ pipeline {
                 withSonarQubeEnv('sonarqube') {
                     script {
                         def scannerHome = tool 'SonarScanner'
-                        sh "${scannerHome}/bin/sonar-scanner \
-                            -Dsonar.projectKey=jenkins-test"
+                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=jenkins-test"
                     }
                 }
             }
@@ -70,7 +69,7 @@ pipeline {
                 withCredentials([gitUsernamePassword(credentialsId: 'gitlhublogin', gitToolName: 'Default')]) {
                     sh'''
                         cat docker-compose.yml
-                        sed -i "s|image: andherson1039/nginx-alpine:|image: andherson1039/nginx-alpine:${BUILD_NUMBER}|g" docker-compose.yml
+                        sed -i "s|image: andherson1039/nginx-alpine:[0-9]\+|image: andherson1039/nginx-alpine:${BUILD_NUMBER}|g" docker-compose.yml
                         cat docker-compose.yml
                         git config --global user.email "jenkins@jenkins.com"
                         git config --global user.name "Jenkins"
@@ -82,14 +81,11 @@ pipeline {
                 }
             }
         }
+    }
 
-        stage('Deployment Docker Compose') {
-            steps {
-                script {
-                    // Ejecutar docker-compose up en la misma ruta del Jenkinsfile
-                    sh 'docker-compose up -d'
-                }
-            }
+    post {
+        always {
+            sh 'docker logout'
         }
     }
 }
