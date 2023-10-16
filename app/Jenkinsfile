@@ -16,6 +16,34 @@ pipeline {
             }
         }
 
+        stage('Scan') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    script {
+                        def scannerHome = tool 'SonarScanner'
+                        sh "${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=jenkins-test"
+                    }
+                }
+            }
+        }
+
+        stage("Quality Gate") {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    script {
+                        def qualityGate = waitForQualityGate abortPipeline: true
+                        if (qualityGate.status == 'OK') {
+                            echo "El control de calidad ha sido aprobado. Continuando con el pipeline."
+                        } else {
+                            echo "El control de calidad ha fallado. Deteniendo el pipeline."
+                            currentBuild.result = 'FAILURE'
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
@@ -38,23 +66,22 @@ pipeline {
         }
 
         stage('Login to GitHub and Push') {
-    steps {
-        withCredentials([gitUsernamePassword(credentialsId: 'gitlhublogin', gitToolName: 'Default')]) {
-            sh'''
-                cat docker-compose.yml
-                sed -i "s|image: andherson1039/nginx-alpine:|image: andherson1039/nginx-alpine:${BUILD_NUMBER}|g" docker-compose.yml
-                cat docker-compose.yml
-                git config --global user.email "jenkins@jenkins.com"
-                git config --global user.name "Jenkins"
-                git add docker-compose.yml
-                git commit -m 'Updated the docker-compose.yml | Jenkins Pipeline'
-                git remote -v
-                git push https://github.com/Andherson333333/jenkis-prueba.git HEAD:main
-            '''
+            steps {
+                withCredentials([gitUsernamePassword(credentialsId: 'gitlhublogin', gitToolName: 'Default')]) {
+                    sh'''
+                        cat docker-compose.yml
+                        sed -i "s|image: andherson1039/nginx-alpine:|image: andherson1039/nginx-alpine:${BUILD_NUMBER}|g" docker-compose.yml
+                        cat docker-compose.yml
+                        git config --global user.email "jenkins@jenkins.com"
+                        git config --global user.name "Jenkins"
+                        git add docker-compose.yml
+                        git commit -m 'Updated the docker-compose.yml | Jenkins Pipeline'
+                        git remote -v
+                        git push https://github.com/Andherson333333/jenkis-prueba.git HEAD:main
+                    '''
+                }
+            }
         }
-    }
-}
-
 
         stage('Deployment Docker Compose') {
             steps {
@@ -63,12 +90,6 @@ pipeline {
                     sh 'docker-compose up -d'
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            sh 'docker logout'
         }
     }
 }
