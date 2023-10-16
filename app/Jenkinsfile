@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Verification Repositories') {
+            steps {
+                checkout scmGit(
+                    branches: [[name: '*/main']],
+                    extensions: [],
+                    userRemoteConfigs: [[url: 'https://github.com/Andherson333333/jenkis-prueba.git']]
+                )
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def customImage = docker.build("andherson1039/nginx-alpine:${BUILD_NUMBER}", '.')
+                }
+            }
+        }
+
+        stage('Login to Docker Hub and Push') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'dockerhubpwd', variable: 'dockerhubpwd')]) {
+                        sh """
+                        docker login -u andherson1039 -p ${dockerhubpwd}
+                        docker push andherson1039/nginx-alpine:${BUILD_NUMBER}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Login to GitHub and Push') {
+    steps {
+        withCredentials([gitUsernamePassword(credentialsId: 'gitlhublogin', gitToolName: 'Default')]) {
+            sh'''
+                cat docker-compose.yml
+                sed -i "s|image: andherson1039/nginx-alpine:|image: andherson1039/nginx-alpine:${BUILD_NUMBER}|g" docker-compose.yml
+                cat docker-compose.yml
+                git config --global user.email "jenkins@jenkins.com"
+                git config --global user.name "Jenkins"
+                git add docker-compose.yml
+                git commit -m 'Updated the docker-compose.yml | Jenkins Pipeline'
+                git remote -v
+                git push https://github.com/Andherson333333/jenkis-prueba.git HEAD:main
+            '''
+        }
+    }
+}
+
+
+        stage('Deployment Docker Compose') {
+            steps {
+                script {
+                    // Ejecutar docker-compose up en la misma ruta del Jenkinsfile
+                    sh 'docker-compose up -d'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout'
+        }
+    }
+}
