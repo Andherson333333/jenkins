@@ -21,7 +21,7 @@ pipeline {
                 withSonarQubeEnv('sonarqube') {
                     script {
                         def scannerHome = tool 'SonarScanner'
-                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=jenkins-test"
+                        sh "cd app && ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=jenkins-test"
                     }
                 }
             }
@@ -46,7 +46,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def customImage = docker.build("andherson1039/nginx-alpine:${BUILD_NUMBER}", '.')
+                    def customImage = docker.build("andherson1039/nginx-alpine:${BUILD_NUMBER}", './app')
                 }
             }
         }
@@ -64,17 +64,17 @@ pipeline {
             }
         }
 
-        stage('Login to GitHub and Push') {
+        stage('Update Deployment in ArgoCD') {
             steps {
                 withCredentials([gitUsernamePassword(credentialsId: 'gitlhublogin', gitToolName: 'Default')]) {
                     sh'''
-                        cat docker-compose.yml
-                        sed -i "s|image: andherson1039/nginx-alpine:[0-9]\+|image: andherson1039/nginx-alpine:${BUILD_NUMBER}|g" argocd/deployment.yaml
-                        cat docker-compose.yml
+                        cat argocd/deployment.yaml
+                        sed -i "s|image: andherson1039/nginx-alpine:[0-9]\\+|image: andherson1039/nginx-alpine:${BUILD_NUMBER}|g" argocd/deployment.yaml
+                        cat argocd/deployment.yaml
                         git config --global user.email "jenkins@jenkins.com"
                         git config --global user.name "Jenkins"
-                        git add docker-compose.yml
-                        git commit -m 'Updated the docker-compose.yml | Jenkins Pipeline'
+                        git add argocd/deployment.yaml
+                        git commit -m 'Updated the deployment.yaml | Jenkins Pipeline'
                         git remote -v
                         git push https://github.com/Andherson333333/jenkis-prueba.git HEAD:main
                     '''
@@ -89,3 +89,5 @@ pipeline {
         }
     }
 }
+
+
