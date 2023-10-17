@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: nginx-container
-        image: andherson1039/nginx-alpine:5
+        image: andherson1039/nginx-alpine:6
         ports:
         - name: http
           containerPort: 80
