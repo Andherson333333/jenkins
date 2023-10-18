@@ -1,20 +1,19 @@
-piVersion: apps/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-test-1
+  name: app
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: app-test-1
+      app: myapp
+  replicas: 2
   template:
     metadata:
       labels:
-        app: app-test-1
+        app: app
     spec:
       containers:
-      - name: nginx-container
-        image: nginx
+      - name: nginx
+        image: nanajanashia/argocd-app:1.2
         ports:
-        - name: http
-          containerPort: 80
+        - containerPort: 80
